@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Moderation Demo (OpenRouter)</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9fafb;
+        text-align: center;
+        padding: 30px;
+      }
+      textarea {
+        width: 80%;
+        height: 100px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 15px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        border: none;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      #response {
+        width: 80%;
+        margin: 20px auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: left;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>🧠 AI Text Generator with Moderation</h1>
+
+    <textarea
+      id="prompt"
+      placeholder="Enter your question or message here..."
+    ></textarea>
+    <br />
+    <button id="submitBtn">Send</button>
+
+    <div id="response"></div>
+
+    <script>
+      const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+      // ⚠️ Replace with your actual OpenRouter API key
+      const OPENROUTER_API_KEY = "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";
+
+      const BANNED_WORDS = ["kill", "hack", "bomb", "terror", "attack"];
+
+      function violatesPolicy(text) {
+        const lower = text.toLowerCase();
+        return BANNED_WORDS.some((word) => lower.includes(word));
+      }
+
+      document.getElementById("submitBtn").addEventListener("click", async () => {
+        const prompt = document.getElementById("prompt").value.trim();
+        const responseDiv = document.getElementById("response");
+
+        if (!prompt) {
+          responseDiv.innerHTML = "<span style='color:red'>Please enter a prompt.</span>";
+          return;
+        }
+
+        // Input moderation
+        if (violatesPolicy(prompt)) {
+          responseDiv.innerHTML =
+            "<span style='color:red'>❌ Your input violated the moderation policy.</span>";
+          return;
+        }
+
+        responseDiv.innerHTML = "⏳ Processing... Please wait.";
+
+        const payload = {
+          model: "openai/gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a polite, safe, and educational AI assistant. Avoid disallowed or unsafe topics.",
+            },
+            { role: "user", content: prompt },
+          ],
+        };
+
+        try {
+          const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${'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'}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            responseDiv.innerHTML =
+              "<span style='color:red'>❌ API Error: " +
+              (data.error?.message || "Unknown error") +
+              "</span>";
+            return;
+          }
+
+          let aiReply = data.choices[0].message.content;
+
+          // Output moderation
+          if (violatesPolicy(aiReply)) {
+            for (const word of BANNED_WORDS) {
+              const regex = new RegExp(word, "gi");
+              aiReply = aiReply.replace(regex, "[REDACTED]");
+            }
+            responseDiv.innerHTML =
+              "<strong>⚠️ Output moderated:</strong><br>" + aiReply;
+          } else {
+            responseDiv.innerHTML =
+              "<strong>✅ AI Response:</strong><br>" + aiReply;
+          }
+        } catch (error) {
+          responseDiv.innerHTML =
+            "<span style='color:red'>🚨 Error: " + error.message + "</span>";
+        }
+      });
+    </script>
+  </body>
+</html>
