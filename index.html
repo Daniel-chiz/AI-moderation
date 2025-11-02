@@ -2,139 +2,152 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Moderation Demo (OpenRouter)</title>
+    <title>Ai Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
       body {
+        background-color: #0f172a;
+        color: #f8fafc;
         font-family: Arial, sans-serif;
-        background: #f9fafb;
-        text-align: center;
-        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        padding: 20px;
       }
-      textarea {
-        width: 80%;
-        height: 100px;
+      h1 {
+        margin-bottom: 20px;
+        color: #38bdf8;
+      }
+      #chat-box {
+        width: 90%;
+        max-width: 600px;
+        height: 70vh;
+        background-color: #1e293b;
+        border-radius: 10px;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .message {
+        margin: 8px 0;
         padding: 10px;
         border-radius: 8px;
-        border: 1px solid #ccc;
-        margin-bottom: 15px;
+        word-wrap: break-word;
+        line-height: 1.6;
       }
-      button {
-        padding: 10px 20px;
-        background-color: #007bff;
+      .user {
+        background-color: #2563eb;
+        align-self: flex-end;
+      }
+      .bot {
+        background-color: #475569;
+        align-self: flex-start;
+        max-width: 85%;
+      }
+
+      .bot h3 {
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        font-size: 1.1em;
+        color: #38bdf8;
+      }
+      .bot ul,
+      .bot ol {
+        margin-left: 1.5em;
+        margin-bottom: 1em;
+      }
+      .bot li {
+        margin-bottom: 0.5em;
+      }
+      .bot p {
+        margin-bottom: 1em;
+      }
+      .bot strong {
+        color: #38bdf8;
+      }
+      .bot code {
+        background-color: #0f172a;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+      }
+      #input-box {
+        width: 90%;
+        max-width: 600px;
+        display: flex;
+        margin-top: 10px;
+      }
+      #user-input {
+        flex: 1;
+        padding: 10px;
         border: none;
-        color: white;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-      button:hover {
-        background-color: #0056b3;
-      }
-      #response {
-        width: 80%;
-        margin: 20px auto;
-        background: #fff;
-        padding: 20px;
         border-radius: 8px;
-        text-align: left;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        outline: none;
+      }
+      #send-btn {
+        padding: 10px 15px;
+        margin-left: 5px;
+        background-color: #38bdf8;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #0f172a;
+        font-weight: bold;
+      }
+      #send-btn:hover {
+        background-color: #0ea5e9;
       }
     </style>
   </head>
-
   <body>
-    <h1>🧠 AI Text Generator with Moderation</h1>
-
-    <textarea
-      id="prompt"
-      placeholder="Enter your question or message here..."
-    ></textarea>
-    <br />
-    <button id="submitBtn">Send</button>
-
-    <div id="response"></div>
+    <h1>Daniel AI Assistant 🤖</h1>
+    <div id="chat-box"></div>
+    <div id="input-box">
+      <input id="user-input" type="text" placeholder="Type your message..." />
+      <button id="send-btn">Send</button>
+    </div>
 
     <script>
-      const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+      const chatBox = document.getElementById("chat-box");
+      const userInput = document.getElementById("user-input");
+      const sendBtn = document.getElementById("send-btn");
 
-      // ⚠️ Replace with your actual OpenRouter API key
-      const OPENROUTER_API_KEY = "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";
-
-      const BANNED_WORDS = ["kill", "hack", "bomb", "terror", "attack"];
-
-      function violatesPolicy(text) {
-        const lower = text.toLowerCase();
-        return BANNED_WORDS.some((word) => lower.includes(word));
-      }
-
-      document.getElementById("submitBtn").addEventListener("click", async () => {
-        const prompt = document.getElementById("prompt").value.trim();
-        const responseDiv = document.getElementById("response");
-
-        if (!prompt) {
-          responseDiv.innerHTML = "<span style='color:red'>Please enter a prompt.</span>";
-          return;
-        }
-
-        // Input moderation
-        if (violatesPolicy(prompt)) {
-          responseDiv.innerHTML =
-            "<span style='color:red'>❌ Your input violated the moderation policy.</span>";
-          return;
-        }
-
-        responseDiv.innerHTML = "⏳ Processing... Please wait.";
-
-        const payload = {
-          model: "openai/gpt-3.5-turbo",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a polite, safe, and educational AI assistant. Avoid disallowed or unsafe topics.",
-            },
-            { role: "user", content: prompt },
-          ],
-        };
+      async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+        appendMessage(text, "user");
+        userInput.value = "";
 
         try {
-          const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${'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'}`,
-            },
-            body: JSON.stringify(payload),
+          const res = await axios.post("http://localhost:3000/chat", {
+            prompt: text,
           });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            responseDiv.innerHTML =
-              "<span style='color:red'>❌ API Error: " +
-              (data.error?.message || "Unknown error") +
-              "</span>";
-            return;
-          }
-
-          let aiReply = data.choices[0].message.content;
-
-          // Output moderation
-          if (violatesPolicy(aiReply)) {
-            for (const word of BANNED_WORDS) {
-              const regex = new RegExp(word, "gi");
-              aiReply = aiReply.replace(regex, "[REDACTED]");
-            }
-            responseDiv.innerHTML =
-              "<strong>⚠️ Output moderated:</strong><br>" + aiReply;
-          } else {
-            responseDiv.innerHTML =
-              "<strong>✅ AI Response:</strong><br>" + aiReply;
-          }
-        } catch (error) {
-          responseDiv.innerHTML =
-            "<span style='color:red'>🚨 Error: " + error.message + "</span>";
+          appendMessage(res.data.reply, "bot", true);
+        } catch (err) {
+          appendMessage("Error: cannot connect to server.", "bot");
         }
+      }
+
+      function appendMessage(text, sender, isHTML = false) {
+        const msg = document.createElement("div");
+        msg.classList.add("message", sender);
+
+        if (isHTML && sender === "bot") {
+          msg.innerHTML = text;
+        } else {
+          msg.textContent = text;
+        }
+
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      sendBtn.addEventListener("click", sendMessage);
+      userInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
       });
     </script>
   </body>
