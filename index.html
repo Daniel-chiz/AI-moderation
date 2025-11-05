@@ -1,154 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Ai Assistant</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <style>
-      body {
-        background-color: #0f172a;
-        color: #f8fafc;
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        padding: 20px;
-      }
-      h1 {
-        margin-bottom: 20px;
-        color: #38bdf8;
-      }
-      #chat-box {
-        width: 90%;
-        max-width: 600px;
-        height: 70vh;
-        background-color: #1e293b;
-        border-radius: 10px;
-        padding: 15px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-      }
-      .message {
-        margin: 8px 0;
-        padding: 10px;
-        border-radius: 8px;
-        word-wrap: break-word;
-        line-height: 1.6;
-      }
-      .user {
-        background-color: #2563eb;
-        align-self: flex-end;
-      }
-      .bot {
-        background-color: #475569;
-        align-self: flex-start;
-        max-width: 85%;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Chat Assistant</title>
 
-      .bot h3 {
-        margin-top: 1em;
-        margin-bottom: 0.5em;
-        font-size: 1.1em;
-        color: #38bdf8;
+  <style>
+    /* ===== Base Styles ===== */
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #663798, #042254);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      background: #ffffff;
+      width: 95%;
+      max-width: 600px;
+      height: 80vh;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ===== Header ===== */
+    .chat-header {
+      background: linear-gradient(135deg, #765798, #1f67e3);
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    /* ===== Chat Area ===== */
+    .chat-box {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #f9f9ff;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: #2575fc;
+      color: white;
+    }
+
+    .ai-message {
+      align-self: flex-start;
+      background: #e4e4e9;
+      color: #222;
+    }
+
+    /* ===== Input Area ===== */
+    .input-area {
+      display: flex;
+      padding: 12px;
+      background: #fff;
+      border-top: 1px solid #eee;
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      border: 3px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border 0.2s ease;
+    }
+
+    textarea:hover{
+      border-color: #1f67e3;
+    }
+
+    textarea:focus {
+      border-color: #2575fc;
+    }
+
+    button {
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: white;
+      border: none;
+      margin-left: 10px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #5b0ecb, #1b63f0);
+      transform: scale(1.05);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Scrollbar Styling ===== */
+    .chat-box::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-box::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 5px;
+    }
+
+    /* ===== Mobile Responsive ===== */
+    @media (max-width: 600px) {
+      .chat-container {
+        height: 90vh;
+        width: 100%;
+        border-radius: 0;
       }
-      .bot ul,
-      .bot ol {
-        margin-left: 1.5em;
-        margin-bottom: 1em;
+      .chat-header {
+        font-size: 1.1rem;
       }
-      .bot li {
-        margin-bottom: 0.5em;
+      textarea {
+        font-size: 0.95rem;
       }
-      .bot p {
-        margin-bottom: 1em;
-      }
-      .bot strong {
-        color: #38bdf8;
-      }
-      .bot code {
-        background-color: #0f172a;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-family: "Courier New", monospace;
-      }
-      #input-box {
-        width: 90%;
-        max-width: 600px;
-        display: flex;
-        margin-top: 10px;
-      }
-      #user-input {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        outline: none;
-      }
-      #send-btn {
-        padding: 10px 15px;
-        margin-left: 5px;
-        background-color: #38bdf8;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        color: #0f172a;
-        font-weight: bold;
-      }
-      #send-btn:hover {
-        background-color: #0ea5e9;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Daniel AI Assistant 🤖</h1>
-    <div id="chat-box"></div>
-    <div id="input-box">
-      <input id="user-input" type="text" placeholder="Type your message..." />
-      <button id="send-btn">Send</button>
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <div class="chat-header">🤖 Dan AI Assistant</div>
+
+    <div id="chatBox" class="chat-box"></div>
+
+    <div class="input-area">
+      <textarea id="userPrompt" rows="1" placeholder="Type your message..."></textarea>
+      <button id="sendBtn">Send</button>
     </div>
+  </div>
 
-    <script>
-      const chatBox = document.getElementById("chat-box");
-      const userInput = document.getElementById("user-input");
-      const sendBtn = document.getElementById("send-btn");
+    
 
-      async function sendMessage() {
-        const text = userInput.value.trim();
-        if (!text) return;
-        appendMessage(text, "user");
-        userInput.value = "";
+     <script>
+    const BASE_URL = "https://openrouter.ai/api/v1";
+    const MODEL = "minimax/minimax-m2:free";
 
-        try {
-          const res = await axios.post("http://localhost:3000/chat", {
-            prompt: text,
-          });
-          appendMessage(res.data.reply, "bot", true);
-        } catch (err) {
-          appendMessage("Error: cannot connect to server.", "bot");
-        }
+    let API_KEY = localStorage.getItem("userKey");
+    if (!API_KEY) {
+      API_KEY = prompt("Enter your OpenRouter API key:");
+      localStorage.setItem("userKey", API_KEY);
+    }
+
+    const chatBox = document.getElementById("chatBox");
+
+    function appendMessage(content, sender = "ai") {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender === "user" ? "user-message" : "ai-message");
+      msg.textContent = content;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function isContentUnsafe(text) {
+      const bannedWords = ["kill", "suicide", "hate", "terrorism", "explicit", "violence", "abuse", "self-harm"];
+      const lower = text.toLowerCase();
+      return bannedWords.some(word => lower.includes(word));
+    }
+
+    async function sendToAI(userPrompt) {
+      if (isContentUnsafe(userPrompt)) {
+        appendMessage("⚠️ Input blocked due to unsafe or disallowed content.", "ai");
+        return;
       }
 
-      function appendMessage(text, sender, isHTML = false) {
-        const msg = document.createElement("div");
-        msg.classList.add("message", sender);
+      appendMessage(userPrompt, "user");
+      appendMessage("⏳ Generating response...", "ai");
 
-        if (isHTML && sender === "bot") {
-          msg.innerHTML = text;
-        } else {
-          msg.textContent = text;
+      try {
+        const response = await fetch(`${BASE_URL}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            messages: [
+              { role: "system", content: "You are a helpful and safe assistant." },
+              { role: "user", content: userPrompt },
+            ],
+          }),
+        });
+
+        const data = await response.json();
+        const aiOutput = data.choices?.[0]?.message?.content?.trim() || "No response received.";
+
+        const lastMsg = chatBox.lastElementChild;
+        if (!response.ok) throw new Error(data.error?.message || "API request failed.");
+
+        if (isContentUnsafe(aiOutput)) {
+          lastMsg.textContent = "⚠️ Output blocked due to unsafe content.";
+          return;
         }
 
-        chatBox.appendChild(msg);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
+        lastMsg.textContent = "🤖 " + aiOutput;
 
-      sendBtn.addEventListener("click", sendMessage);
-      userInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendMessage();
-      });
-    </script>
-  </body>
+      } catch (err) {
+        const lastMsg = chatBox.lastElementChild;
+        lastMsg.textContent = "❌ Error: " + err.message;
+        console.error(err);
+      }
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", () => {
+      const userPrompt = document.getElementById("userPrompt").value.trim();
+      if (!userPrompt) return alert("Please enter a message.");
+      document.getElementById("userPrompt").value = "";
+      sendToAI(userPrompt);
+    });
+
+    // Enter key submit
+    document.getElementById("userPrompt").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById("sendBtn").click();
+      }
+    });
+  </script>
+</body>
 </html>
